@@ -1,0 +1,9 @@
+# Experiment data
+experiments/
+
+# Generated reports
+reports/
+
+# Temporary files
+*.tmp
+*.swp
