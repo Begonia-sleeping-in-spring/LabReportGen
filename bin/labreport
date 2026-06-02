@@ -18,6 +18,25 @@ if [ "$1" = "start" ]; then
     echo "Experiment started:"
     echo "$EXP_DIR"
 
+
+elif [ "$1" = "snap" ]; then
+
+    if [ ! -f "$STATE_FILE" ]; then
+        echo "No active experiment. Run: labreport start"
+        exit 1
+    fi
+
+    EXP_DIR=$(cat "$STATE_FILE")
+
+    mkdir -p "$EXP_DIR"
+
+    echo "[$(date)] $2" >> "$EXP_DIR/snapshots.log"
+
+    echo "snap saved"
+
+
 else
-    echo "Usage: labreport start"
+    echo "Usage:"
+    echo "  labreport start"
+    echo "  labreport snap \"message\""
 fi
