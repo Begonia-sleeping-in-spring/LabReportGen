@@ -3,85 +3,128 @@
 BASE_DIR="experiments"
 STATE_FILE=".current_session"
 
-if [ "$1" = "start" ]; then
+# =========================
+# 命令记录（自动）
+# =========================
+labreport_log() {
+    if [ -z "$LABREPORT_DIR" ]; then
+        return
+    fi
 
+    echo "[$(date)] $(history 1 | sed 's/^ *[0-9]* *//')" \
+        >> "$LABREPORT_DIR/commands.log"
+}
+
+# =========================
+# start
+# =========================
+start() {
     TIMESTAMP=$(date +"%Y%m%d_%H%M%S")
     EXP_DIR="$BASE_DIR/exp_$TIMESTAMP"
 
-    mkdir -p "$EXP_DIR"
+    mkdir -p "$EXP_DIR/screenshots"
+
+    echo "$EXP_DIR" > "$STATE_FILE"
+
+    export LABREPORT_DIR="$EXP_DIR"
+    PROMPT_COMMAND="labreport_log"
 
     echo "START_TIME=$(date)" > "$EXP_DIR/metadata.conf"
     echo "STATUS=RUNNING" >> "$EXP_DIR/metadata.conf"
 
-    echo "$EXP_DIR" > "$STATE_FILE"
-
     echo "Experiment started:"
     echo "$EXP_DIR"
+}
 
-
-elif [ "$1" = "snap" ]; then
-
+# =========================
+# run（执行命令并记录输出）
+# =========================
+run_cmd() {
     if [ ! -f "$STATE_FILE" ]; then
-        echo "No active experiment. Run: labreport start"
+        echo "No active experiment"
         exit 1
     fi
 
     EXP_DIR=$(cat "$STATE_FILE")
+    CMD="$*"
 
-    mkdir -p "$EXP_DIR"
+    echo "====================" >> "$EXP_DIR/events.log"
+    echo "TIME: $(date)" >> "$EXP_DIR/events.log"
+    echo "CMD: $CMD" >> "$EXP_DIR/events.log"
 
-    echo "[$(date)] $2" >> "$EXP_DIR/snapshots.log"
+    OUTPUT=$($CMD 2>&1)
 
-    echo "snap saved"
+    echo "$OUTPUT" >> "$EXP_DIR/events.log"
+    echo "$OUTPUT"
+}
 
-
-elif [ "$1" = "stop" ]; then
-
+# =========================
+# snap（截图）
+# =========================
+snap() {
     if [ ! -f "$STATE_FILE" ]; then
-        echo "No active experiment."
+        echo "No active experiment"
         exit 1
     fi
 
+    EXP_DIR=$(cat "$STATE_FILE")
+    IMG="$EXP_DIR/screenshots/$(date +%s).png"
+
+    scrot "$IMG"
+
+    echo "SNAP $(date) $1 -> $IMG" >> "$EXP_DIR/events.log"
+    echo "snap saved: $IMG"
+}
+
+# =========================
+# stop
+# =========================
+stop() {
     EXP_DIR=$(cat "$STATE_FILE")
 
     echo "END_TIME=$(date)" >> "$EXP_DIR/metadata.conf"
     echo "STATUS=FINISHED" >> "$EXP_DIR/metadata.conf"
 
+    rm -f "$STATE_FILE"
+
     echo "Experiment stopped:"
     echo "$EXP_DIR"
+}
 
+# =========================
+# generate（调用python）
+# =========================
+generate() {
+    python3 tools/generate.py
+}
 
-elif [ "$1" = "report" ]; then
+# =========================
+# 主入口（关键：你缺的就是这个）
+# =========================
+case "$1" in
+    start)
+        start
+        ;;
+    run)
+        shift
+        run_cmd "$@"
+        ;;
+    snap)
+        snap "$2"
+        ;;
+    stop)
+        stop
+        ;;
+    generate)
+        generate
+        ;;
+    *)
+        echo "Usage:"
+        echo "  start"
+        echo "  run <command>"
+        echo "  snap <msg>"
+        echo "  stop"
+        echo "  generate"
+        ;;
+esac
 
-    if [ ! -f "$STATE_FILE" ]; then
-        echo "No active experiment."
-        exit 1
-    fi
-
-    EXP_DIR=$(cat "$STATE_FILE")
-
-    REPORT_DIR="reports"
-    mkdir -p "$REPORT_DIR"
-
-    REPORT_FILE="$REPORT_DIR/$(basename $EXP_DIR)_report.md"
-
-    echo "# Lab Report" > "$REPORT_FILE"
-    echo "" >> "$REPORT_FILE"
-    echo "Experiment: $EXP_DIR" >> "$REPORT_FILE"
-    echo "" >> "$REPORT_FILE"
-    cat "$EXP_DIR/metadata.conf" >> "$REPORT_FILE"
-    echo "" >> "$REPORT_FILE"
-
-    echo "## Snapshots" >> "$REPORT_FILE"
-    cat "$EXP_DIR/snapshots.log" >> "$REPORT_FILE"
-
-    echo "Report generated:"
-    echo "$REPORT_FILE"
-
-
-else
-    echo "Usage:"
-    echo "  labreport start"
-    echo "  labreport snap \"message\""
-    echo "  labreport stop"
-fi
