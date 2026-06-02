@@ -35,8 +35,27 @@ elif [ "$1" = "snap" ]; then
     echo "snap saved"
 
 
+elif [ "$1" = "stop" ]; then
+
+    if [ ! -f "$STATE_FILE" ]; then
+        echo "No active experiment."
+        exit 1
+    fi
+
+    EXP_DIR=$(cat "$STATE_FILE")
+
+    echo "END_TIME=$(date)" >> "$EXP_DIR/metadata.conf"
+    echo "STATUS=FINISHED" >> "$EXP_DIR/metadata.conf"
+
+    rm -f "$STATE_FILE"
+
+    echo "Experiment stopped:"
+    echo "$EXP_DIR"
+
+
 else
     echo "Usage:"
     echo "  labreport start"
     echo "  labreport snap \"message\""
+    echo "  labreport stop"
 fi
