@@ -1,0 +1,23 @@
+#!/bin/bash
+
+BASE_DIR="experiments"
+STATE_FILE=".current_session"
+
+if [ "$1" = "start" ]; then
+
+    TIMESTAMP=$(date +"%Y%m%d_%H%M%S")
+    EXP_DIR="$BASE_DIR/exp_$TIMESTAMP"
+
+    mkdir -p "$EXP_DIR"
+
+    echo "START_TIME=$(date)" > "$EXP_DIR/metadata.conf"
+    echo "STATUS=RUNNING" >> "$EXP_DIR/metadata.conf"
+
+    echo "$EXP_DIR" > "$STATE_FILE"
+
+    echo "Experiment started:"
+    echo "$EXP_DIR"
+
+else
+    echo "Usage: labreport start"
+fi
