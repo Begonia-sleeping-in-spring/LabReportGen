@@ -7,12 +7,20 @@ STATE_FILE=".current_session"
 # 命令记录（自动）
 # =========================
 labreport_log() {
+
     if [ -z "$LABREPORT_DIR" ]; then
         return
     fi
 
-    echo "[$(date)] $(history 1 | sed 's/^ *[0-9]* *//')" \
-        >> "$LABREPORT_DIR/commands.log"
+    CMD=$(history 1 | sed 's/^ *[0-9]* *//')
+
+    echo "[$(date)] $CMD" >> "$LABREPORT_DIR/commands.log"
+
+    #  自动检测编辑行为
+    if echo "$CMD" | grep -q "nano"; then
+        FILE=$(echo "$CMD" | awk '{print $2}')
+        capture_file_content "$FILE"
+    fi
 }
 
 # =========================
@@ -34,6 +42,15 @@ start() {
 
     echo "Experiment started:"
     echo "$EXP_DIR"
+    
+
+echo ""
+echo "export LABREPORT_DIR=$(pwd)/$EXP_DIR"
+echo "source $(pwd)/bin/labreport_hook.sh"
+echo "export PROMPT_COMMAND=labreport_log"
+echo ""
+
+echo "请执行以上三条命令"
 }
 
 # =========================
@@ -48,13 +65,17 @@ run_cmd() {
     EXP_DIR=$(cat "$STATE_FILE")
     CMD="$*"
 
-    echo "====================" >> "$EXP_DIR/events.log"
-    echo "TIME: $(date)" >> "$EXP_DIR/events.log"
-    echo "CMD: $CMD" >> "$EXP_DIR/events.log"
+    LOG="$EXP_DIR/events.log"
+
+    echo "====================" >> "$LOG"
+    echo "TIME: $(date)" >> "$LOG"
+    echo "CMD: $CMD" >> "$LOG"
 
     OUTPUT=$($CMD 2>&1)
 
-    echo "$OUTPUT" >> "$EXP_DIR/events.log"
+    echo "OUTPUT:" >> "$LOG"
+    echo "$OUTPUT" >> "$LOG"
+
     echo "$OUTPUT"
 }
 
