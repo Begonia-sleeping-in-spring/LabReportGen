@@ -4,14 +4,17 @@ experiments/
 # Generated reports
 reports/
 
+# Runtime state
+.current_session
+
 # Temporary files
 *.tmp
 *.swp
 
-# Python cache 
+# Python cache
 __pycache__/
 *.pyc
 
-# Optional: test files
-*.png
-a.txt
+# OS files
+.DS_Store
+Thumbs.db

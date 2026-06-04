@@ -11,4 +11,6 @@ labreport_log() {
     echo "==================================" >> "$LABREPORT_DIR/commands.log"
     echo "TIME: $(date)" >> "$LABREPORT_DIR/commands.log"
     echo "CMD : $CMD" >> "$LABREPORT_DIR/commands.log"
+
+    ~/LabReportGen/bin/file_snapshot.sh
 }
