@@ -12,8 +12,22 @@ find . -type f \
     ! -path "./.git/*" \
     ! -path "./experiments/*" \
     ! -path "./reports/*" \
+    ! -name "*.png" \
+    ! -name "*.jpg" \
+    ! -name "*.jpeg" \
+    ! -name "*.gif" \
+    ! -name "*.pdf" \
+    ! -name "*.docx" \
+    ! -name "*.zip" \
+    ! -name "*.tar.gz" \
 | while read file
+
 do
+
+    if ! file "$file" | grep -q text
+    then
+        continue
+    fi
 
     HASH=$(md5sum "$file" | awk '{print $1}')
 
